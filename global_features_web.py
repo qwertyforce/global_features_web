@@ -25,17 +25,16 @@ model = timm.create_model('beit_base_patch16_224_in22k', pretrained=True)
 model.head=torch.nn.Identity()
 model.eval()
 model.to(device)
-
 index = None
 DATA_CHANGED_SINCE_LAST_SAVE = False
-
 DB = lmdb.open('./features.lmdb',map_size=5000*1_000_000) #5000mb
-
 pca_w_file = Path("./pca_w.pkl")
 pca = None
 if pca_w_file.is_file():
     with open(pca_w_file, 'rb') as pickle_file:
         pca = pickle.load(pickle_file)
+app = FastAPI()
+
 
 def read_img_buffer(image_data):
     img = Image.open(io.BytesIO(image_data))
@@ -53,7 +52,7 @@ def transform(im):
     old_size = im.size  # old_size[0] is in (width, height) format
     ratio = float(desired_size)/max(old_size)
     new_size = tuple([int(x*ratio) for x in old_size])
-    im = im.resize(new_size, Image.ANTIALIAS)
+    im = im.resize(new_size, Image.Resampling.LANCZOS)
     new_im = Image.new("RGB", (desired_size, desired_size))
     new_im.paste(im, ((desired_size-new_size[0])//2, (desired_size-new_size[1])//2))
     return _transform(new_im)
@@ -118,7 +117,6 @@ def nn_find_similar(feature_vector, k, distance_threshold, aqe_n, aqe_alpha):
     res = sorted(res, key=lambda x: x["distance"]) 
     return res
 
-app = FastAPI()
 @app.get("/")
 async def read_root():
     return {"Hello": "World"}
@@ -225,6 +223,7 @@ def periodically_save_index(loop):
 print(__name__)
 if __name__ == 'global_features_web':
     init_index()
+    
     loop = asyncio.get_event_loop()
     loop.call_later(10, periodically_save_index,loop)
 

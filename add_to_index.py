@@ -4,27 +4,26 @@ import numpy as np
 import lmdb
 import faiss
 import pickle 
+
 DB_features = lmdb.open("features.lmdb", readonly=True)
 dim = 768
 faiss_dim = dim
 quantizer = faiss.IndexFlat(faiss_dim, faiss.METRIC_L2)
 index = faiss.IndexIDMap2(quantizer)
-USE_PCA = True
+
+pca = None
+pca_w_file = Path("./pca_w.pkl")
+if pca_w_file.is_file():
+    with open(pca_w_file, 'rb') as pickle_file:
+        pca = pickle.load(pickle_file)
+        USE_PCA = True
+        print("USING PCA")
+if pca is None:
+    USE_PCA = False
+    print("pca_w.pkl not found. Proceeding without PCA")
 
 def int_from_bytes(xbytes: bytes) -> int:
     return int.from_bytes(xbytes, 'big')
-
-
-if USE_PCA:
-    import pickle
-    pca_w_file = Path("./pca_w.pkl")
-    pca = None
-    if pca_w_file.is_file():
-        with open(pca_w_file, 'rb') as pickle_file:
-            pca = pickle.load(pickle_file)
-    if pca is None:
-        print("no pca_w.pkl found. exiting...")
-        exit()
     
 def get_all_data_iterator(batch_size=10000):
     with DB_features.begin(buffers=True) as txn:
@@ -43,7 +42,7 @@ def get_all_data_iterator(batch_size=10000):
                         for i in range(len(temp_features)):
                             temp_features[i]/=np.linalg.norm(temp_features[i])
                     yield temp_ids, temp_features
-            if retrieved != 0:
+            if retrieved != 0: #retrieved is less than batch_size in the end of final iteration
                 if USE_PCA:
                     temp_features = temp_features[:retrieved]
                     temp_features = pca.transform(temp_features)
