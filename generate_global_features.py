@@ -43,8 +43,9 @@ class InferenceDataset(Dataset):
                 img = read_img_file(img_path)
                 img = transform2(img)
                 return (int_to_bytes(image_id), img)
-            except:
-                print("error reading {img_path}")
+            except Exception as e:
+                print(e)
+                print(f"error reading {img_path}")
 
 def collate_wrapper(batch):
     ids = [el[0] for el in batch if el]
