@@ -1,6 +1,7 @@
 import uvicorn
 if __name__ == '__main__':
     uvicorn.run('global_features_web:app', host='127.0.0.1', port=33334, log_level="info")
+    exit()
 
 from os.path import exists
 from typing import Optional, Union
@@ -27,14 +28,23 @@ model.eval()
 model.to(device)
 index = None
 DATA_CHANGED_SINCE_LAST_SAVE = False
-DB = lmdb.open('./features.lmdb',map_size=5000*1_000_000) #5000mb
+
 pca_w_file = Path("./pca_w.pkl")
 pca = None
 if pca_w_file.is_file():
     with open(pca_w_file, 'rb') as pickle_file:
         pca = pickle.load(pickle_file)
 app = FastAPI()
+_transform=transforms.Compose([
+                       transforms.ToTensor(),
+                       transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])])
 
+def main():
+    global DB_global_features
+    init_index()
+    DB_global_features = lmdb.open('./features.lmdb',map_size=5000*1_000_000) #5000mb
+    loop = asyncio.get_event_loop()
+    loop.call_later(10, periodically_save_index,loop)
 
 def read_img_buffer(image_data):
     img = Image.open(io.BytesIO(image_data))
@@ -42,10 +52,6 @@ def read_img_buffer(image_data):
     # if img.mode != 'RGB':
     #     img = img.convert('RGB')
     return img
-
-_transform=transforms.Compose([
-                       transforms.ToTensor(),
-                       transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])])
 
 def transform(im):
     desired_size = 224
@@ -57,16 +63,15 @@ def transform(im):
     new_im.paste(im, ((desired_size-new_size[0])//2, (desired_size-new_size[1])//2))
     return _transform(new_im)
 
-
 def int_to_bytes(x: int) -> bytes:
     return x.to_bytes((x.bit_length() + 7) // 8, 'big')
 
 def delete_descriptor_by_id(id):
-    with DB.begin(write=True,buffers=True) as txn:
+    with DB_global_features.begin(write=True,buffers=True) as txn:
         txn.delete(int_to_bytes(id))   #True = deleted False = not found
 
 def add_descriptor(id, features):
-    with DB.begin(write=True, buffers=True) as txn:
+    with DB_global_features.begin(write=True, buffers=True) as txn:
         txn.put(int_to_bytes(id), np.frombuffer(features,dtype=np.float32))
 
 def init_index():
@@ -220,10 +225,4 @@ def periodically_save_index(loop):
         faiss.write_index(index, "./populated.index")
     loop.call_later(10, periodically_save_index,loop)
 
-print(__name__)
-if __name__ == 'global_features_web':
-    init_index()
-    
-    loop = asyncio.get_event_loop()
-    loop.call_later(10, periodically_save_index,loop)
-
+main()
