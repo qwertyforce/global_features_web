@@ -48,8 +48,10 @@ class InferenceDataset(Dataset):
                 print(f"error reading {img_path}")
 
 def collate_wrapper(batch):
-    ids = [el[0] for el in batch if el]
-    images = [el[1] for el in batch if el]
+    batch = [el for el in batch if el] #remove None
+    if len(batch) == 0:
+        return [],[],[]
+    ids, images = zip(*batch)
     return ids, images
     
 
@@ -110,6 +112,8 @@ if __name__ == '__main__': #entry point
     infer_images = InferenceDataset(new_images,IMAGE_PATH)
     dataloader = torch.utils.data.DataLoader(infer_images, batch_size=BATCH_SIZE, num_workers=NUM_WORKERS, prefetch_factor=PREFETCH_FACTOR, collate_fn=collate_wrapper)
     for ids, images in tqdm(dataloader):
+        if len(ids) == 0:
+            continue
         images = torch.stack(images).to(device)
         features = [feature.tobytes() for feature in get_features(images)]
         print("pushing data to db")
