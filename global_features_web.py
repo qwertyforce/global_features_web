@@ -126,7 +126,7 @@ def nn_find_similar(feature_vector, k, distance_threshold, aqe_n, aqe_alpha):
 async def read_root():
     return {"Hello": "World"}
 
-class Item_image_id_k(BaseModel):
+class Item_global_features_get_similar_images_by_id(BaseModel):
     image_id: int
     k: Union[str,int,None] = None
     distance_threshold: Union[str,float,None] = None
@@ -134,7 +134,7 @@ class Item_image_id_k(BaseModel):
     aqe_alpha: Union[str,float,None] = None
 
 @app.post("/global_features_get_similar_images_by_id")
-async def global_features_get_similar_images_by_id_handler(item: Item_image_id_k):
+async def global_features_get_similar_images_by_id_handler(item: Item_global_features_get_similar_images_by_id):
     try:
         k=item.k
         distance_threshold=item.distance_threshold
