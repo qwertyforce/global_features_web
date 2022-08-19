@@ -48,9 +48,9 @@ def main():
 
 def read_img_buffer(image_data):
     img = Image.open(io.BytesIO(image_data))
-    img=img.convert('L').convert('RGB') #GREYSCALE
-    # if img.mode != 'RGB':
-    #     img = img.convert('RGB')
+    # img=img.convert('L').convert('RGB') #GREYSCALE
+    if img.mode != 'RGB':
+        img = img.convert('RGB')
     return img
 
 def transform(im):
@@ -87,9 +87,9 @@ def get_features(image_buffer):
     image=read_img_buffer(image_buffer)
     image = transform(image).unsqueeze(0).to(device)
     with torch.no_grad():
-        feature_vector = model(image).cpu().numpy()[0]
-    feature_vector/=np.linalg.norm(feature_vector)
-    return feature_vector
+        feature_vector = model(image)
+        feature_vector/=torch.linalg.norm(feature_vector)
+    return feature_vector.cpu().numpy().astype(np.float32)
 
 def get_aqe_vector(feature_vector, n, alpha):
     _, I = index.search(feature_vector, n)
@@ -102,7 +102,6 @@ def get_aqe_vector(feature_vector, n, alpha):
         for j in range(n):
             _sum+=top_features[j][i] * np.dot(feature_vector, top_features[j].T)**alpha
         new_feature.append(_sum)
-
     new_feature=np.array(new_feature)
     new_feature/=np.linalg.norm(new_feature)
     new_feature=new_feature.astype(np.float32).reshape(1,-1)
@@ -174,9 +173,9 @@ async def global_features_get_similar_images_by_image_buffer_handler(image: byte
 
         target_features=get_features(image)
         if pca:
-            target_features=pca.transform(target_features.reshape(1,-1))[0]
+            target_features=pca.transform(target_features)
             target_features/=np.linalg.norm(target_features)
-        target_features=target_features.astype(np.float32).reshape(1,-1)
+        target_features=target_features.astype(np.float32)
         results = nn_find_similar(target_features, k, distance_threshold, aqe_n, aqe_alpha)
         return results
     except RuntimeError:
@@ -189,12 +188,12 @@ async def calculate_global_features_handler(image: bytes = File(...),image_id: s
         global DATA_CHANGED_SINCE_LAST_SAVE
         image_id=int(image_id)
         features=get_features(image)
-        add_descriptor(image_id, features.astype(np.float32))
+        add_descriptor(image_id, features)
         if pca:
-            features=pca.transform(features.reshape(1,-1))[0]
+            features=pca.transform(features)
             features/=np.linalg.norm(features)
         features=features.astype(np.float32)
-        index.add_with_ids(features.reshape(1,-1), np.int64([image_id])) # index.add_items(features,[image_id])
+        index.add_with_ids(features, np.int64([image_id])) # index.add_items(features,[image_id])
         DATA_CHANGED_SINCE_LAST_SAVE = True
         return Response(status_code=status.HTTP_200_OK)
     except:
