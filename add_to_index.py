@@ -8,8 +8,11 @@ import pickle
 DB_features = lmdb.open("features.lmdb", readonly=True)
 dim = 768
 faiss_dim = dim
-quantizer = faiss.IndexFlat(faiss_dim, faiss.METRIC_L2)
-index = faiss.IndexIDMap2(quantizer)
+if Path("./trained.index").is_file():
+    index = faiss.read_index("./trained.index")
+else:
+    quantizer = faiss.IndexFlat(faiss_dim, faiss.METRIC_L2)
+    index = faiss.IndexIDMap2(quantizer)
 
 pca = None
 pca_w_file = Path("./pca_w.pkl")
