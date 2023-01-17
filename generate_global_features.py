@@ -95,7 +95,7 @@ if __name__ == '__main__': #entry point
 
     
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    device = "cpu"
+    # device = "cpu"
     print(f"using {device}")
 
     model = timm.create_model('beit_base_patch16_224_in22k', pretrained=True)
