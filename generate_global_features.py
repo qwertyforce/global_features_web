@@ -1,7 +1,5 @@
 from PIL import Image
 from torch.utils.data import Dataset
-
-from modules.byte_ops import int_from_bytes, int_to_bytes 
 from modules.transform_ops import transform
 
 def read_img_file(f):
@@ -47,6 +45,7 @@ if __name__ == '__main__': #entry point
     
     from modules.inference_ops import get_image_features, get_device
     from modules.lmdb_ops import get_dbs
+    from modules.byte_ops import int_from_bytes, int_to_bytes 
 
     parser = argparse.ArgumentParser()
     parser.add_argument('image_path', type=str,nargs='?', default="./../test_images")

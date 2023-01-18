@@ -22,7 +22,6 @@ from fastapi import FastAPI, File,Form, HTTPException, Response, status
 import numpy as np
 import asyncio
 from PIL import Image
-import torch
 from pathlib import Path
 import io
 import faiss
