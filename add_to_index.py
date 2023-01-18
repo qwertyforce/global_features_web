@@ -8,6 +8,7 @@ import pickle
 DB_features = lmdb.open("features.lmdb", readonly=True)
 dim = 768
 faiss_dim = dim
+
 if Path("./trained.index").is_file():
     index = faiss.read_index("./trained.index")
 else:
