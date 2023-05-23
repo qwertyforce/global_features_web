@@ -8,7 +8,7 @@ import pickle
 from pathlib import Path
 
 dim = 512
-DB_descriptors = lmdb.open("features.lmdb", readonly=True)
+DB_descriptors = lmdb.open("./data/features.lmdb", readonly=True)
 entries = DB_descriptors.stat()['entries']
 nlist = int(math.sqrt(entries))
 print(f"entries = {entries}")
@@ -19,7 +19,7 @@ index = faiss.IndexIDMap2(index)
 batch_size= min(entries,5_000_000)
 
 pca = None
-pca_w_file = Path("./pca_w.pkl")
+pca_w_file = Path("./data/pca_w.pkl")
 if pca_w_file.is_file():
     with open(pca_w_file, 'rb') as pickle_file:
         pca = pickle.load(pickle_file)
@@ -56,4 +56,4 @@ try:
     remove("train.mmap")
 except:
     pass    
-faiss.write_index(index,"./trained.index")
+faiss.write_index(index,"./data/trained.index")

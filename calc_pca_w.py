@@ -6,7 +6,7 @@ import lmdb
 dim = 768
 pca = PCA(n_components=dim, whiten=True, copy=False)
 
-DB_descriptors = lmdb.open("features.lmdb", readonly=True)
+DB_descriptors = lmdb.open("./data/features.lmdb", readonly=True)
 batch_size=DB_descriptors.stat()["entries"]
 print(f"batch_size = {batch_size}")
 features = np.zeros((batch_size, dim),np.float32)
@@ -21,5 +21,5 @@ def get_data():
                 retrieved+=1
 get_data()
 pca.fit(features)
-with open('pca_w.pkl', 'wb') as handle:
+with open('./data/pca_w.pkl', 'wb') as handle:
     pickle.dump(pca, handle)
