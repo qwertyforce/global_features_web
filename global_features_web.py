@@ -270,11 +270,17 @@ def init_index():
     if exists("./data/populated.index"):
         index = faiss.read_index("./data/populated.index")
     else:
-        print("Index is not found! Exiting...")
+        print("Index is not found!")
         print("Creating empty index")
         import subprocess
-        subprocess.call(['python3', 'add_to_index.py'])
-        subprocess.call(['python', 'add_to_index.py']) #one should exist
+        try:
+            subprocess.call(['python3', 'add_to_index.py'])
+        except:
+            pass
+        try:                                                 #one of these should exist
+            subprocess.call(['python', 'add_to_index.py']) 
+        except:
+            pass
         init_index()
 
 def periodically_save_index(loop):
